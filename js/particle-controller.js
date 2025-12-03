@@ -19,13 +19,24 @@ export class ParticleController {
         this.currentShape = 'heart';
         this.autoRotate = true;
         this.baseRotationY = 0;
-        
+        this.handPosition3D = null; // 3D position of hand in world space
+
         this.initializeSmoothing();
         this.initializeThreeJS();
         this.initializeUI();
         this.initializeHandTracking();
         this.setupEventListeners();
+        this.initializeColorPicker();
         this.animate();
+    }
+
+    /**
+     * Initialize color picker with default color
+     */
+    initializeColorPicker() {
+        const defaultColor = '#00d4ff';
+        const defaultName = 'Cyan';
+        this.setParticleColor(defaultColor, defaultName);
     }
     
     /**
@@ -55,17 +66,45 @@ export class ParticleController {
     initializeThreeJS() {
         this.scene = new THREE.Scene();
         this.scene.fog = new THREE.FogExp2(0x090a0f, 0.015);
-        
+
         this.camera = new THREE.PerspectiveCamera(
             75, window.innerWidth / window.innerHeight, 0.1, 1000);
         this.camera.position.z = 8;
-        
+
         this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+        this.renderer.toneMapping = THREE.ReinhardToneMapping;
         document.body.appendChild(this.renderer.domElement);
-        
+
         this.particles = new ParticleSystem(this.scene, this.config.particle);
+
+        // Setup Bloom Post-Processing
+        this.setupBloom();
+    }
+
+    /**
+     * Setup bloom post-processing effect
+     */
+    setupBloom() {
+        // Create effect composer
+        this.composer = new THREE.EffectComposer(this.renderer);
+
+        // Add render pass (renders the scene)
+        const renderPass = new THREE.RenderPass(this.scene, this.camera);
+        this.composer.addPass(renderPass);
+
+        // Add bloom pass (creates the glow effect)
+        const bloomPass = new THREE.UnrealBloomPass(
+            new THREE.Vector2(window.innerWidth, window.innerHeight),
+            1.5,    // Bloom strength (intensity of glow)
+            0.4,    // Bloom radius (spread of glow)
+            0.85    // Bloom threshold (minimum brightness to glow)
+        );
+        this.composer.addPass(bloomPass);
+
+        // Store bloom pass for potential adjustments
+        this.bloomPass = bloomPass;
     }
     
     /**
@@ -127,21 +166,85 @@ export class ParticleController {
             });
         });
         
-        // Color picker
-        const colorPicker = document.getElementById('colorPicker');
-        colorPicker.addEventListener('input', (e) => {
-            this.particles.setColor(e.target.value);
-            this.uiManager.updateColorValue(e.target.value);
+        // Color selector dropdown
+        this.setupColorSelector();
+
+        // Gradient toggle
+        const gradientToggle = document.getElementById('gradientToggle');
+        const gradientControls = document.getElementById('gradientControls');
+        if (gradientToggle) {
+            gradientToggle.addEventListener('change', (e) => {
+                this.config.gradient.enabled = e.target.checked;
+
+                // Show/hide gradient controls with animation
+                if (gradientControls) {
+                    if (e.target.checked) {
+                        gradientControls.style.display = 'block';
+                        gradientControls.style.opacity = '0';
+                        requestAnimationFrame(() => {
+                            gradientControls.style.opacity = '1';
+                        });
+                    } else {
+                        gradientControls.style.opacity = '0';
+                        setTimeout(() => {
+                            gradientControls.style.display = 'none';
+                        }, 200);
+                    }
+                }
+
+                // If disabling gradient, reapply current solid color
+                if (!e.target.checked) {
+                    const currentColor = '#' + this.particles.baseColor.getHexString().toUpperCase();
+                    this.particles.setColor(currentColor);
+                }
+            });
+        }
+
+        // Gradient mode buttons
+        document.querySelectorAll('.gradient-mode-btn').forEach(btn => {
+            btn.addEventListener('click', () => {
+                document.querySelectorAll('.gradient-mode-btn').forEach(b =>
+                    b.classList.remove('active'));
+                btn.classList.add('active');
+                this.config.gradient.mode = btn.dataset.gradientMode;
+            });
         });
-        
+
         // Window resize
         window.addEventListener('resize', () => {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
             this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.composer.setSize(window.innerWidth, window.innerHeight);
         });
     }
     
+    /**
+     * Convert 2D hand position to 3D world coordinates
+     */
+    screenToWorld(normalizedX, normalizedY) {
+        // Convert normalized coordinates (0-1) to NDC (-1 to 1)
+        const x = (normalizedX * 2) - 1;
+        const y = -(normalizedY * 2) + 1; // Flip Y axis
+
+        // Create a vector at the near plane
+        const vector = new THREE.Vector3(x, y, 0.5);
+
+        // Unproject to get world coordinates
+        vector.unproject(this.camera);
+
+        // Calculate direction from camera to the point
+        const dir = vector.sub(this.camera.position).normalize();
+
+        // Calculate distance to place hand at same depth as particles (z=0 plane)
+        const distance = -this.camera.position.z / dir.z;
+
+        // Calculate final position
+        const pos = this.camera.position.clone().add(dir.multiplyScalar(distance));
+
+        return pos;
+    }
+
     /**
      * Set particle shape
      */
@@ -149,12 +252,124 @@ export class ParticleController {
         this.currentShape = type;
         const positions = ShapeGenerator.generate(type, this.config.particle.count);
         this.particles.setTargetPositions(positions);
-        
-        document.querySelectorAll('.shape-btn').forEach(b => 
+
+        document.querySelectorAll('.shape-btn').forEach(b =>
             b.classList.remove('active'));
         if (buttonElement) {
             buttonElement.classList.add('active');
         }
+    }
+
+    /**
+     * Setup color selector - simple grid version
+     */
+    setupColorSelector() {
+        const colorBtns = document.querySelectorAll('.color-btn');
+        const colorPicker = document.getElementById('colorPicker');
+        const colorValueDisplay = document.getElementById('colorValue');
+        
+        // Color button clicks
+        colorBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const color = btn.dataset.color;
+                if (color) {
+                    // Update active state
+                    colorBtns.forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    
+                    // Set color
+                    this.setParticleColor(color, btn.title);
+                    
+                    // Update picker and display
+                    if (colorPicker) colorPicker.value = color;
+                    if (colorValueDisplay) colorValueDisplay.textContent = color.toUpperCase();
+                }
+            });
+        });
+        
+        // Custom color picker
+        if (colorPicker) {
+            colorPicker.addEventListener('input', (e) => {
+                const color = e.target.value.toUpperCase();
+                this.setParticleColor(color, 'Custom');
+                
+                // Update display
+                if (colorValueDisplay) colorValueDisplay.textContent = color;
+                
+                // Remove active from preset buttons
+                colorBtns.forEach(b => b.classList.remove('active'));
+            });
+        }
+    }
+    
+    /**
+     * Set particle color
+     */
+    setParticleColor(color, name = null) {
+        if (!color) return;
+        
+        // Normalize color to uppercase for consistency
+        const normalizedColor = color.toUpperCase();
+        
+        // Ensure it starts with #
+        const hexColor = normalizedColor.startsWith('#') ? normalizedColor : '#' + normalizedColor;
+        
+        // Update particle material color
+        this.particles.setColor(hexColor);
+        
+        // Also update gradient base hue from the selected color
+        const threeColor = new THREE.Color(hexColor);
+        const hsl = { h: 0, s: 0, l: 0 };
+        threeColor.getHSL(hsl);
+        this.config.gradient.baseHue = hsl.h;
+        this.config.gradient.saturation = Math.max(hsl.s, 0.7); // Keep saturation high
+        this.config.gradient.lightness = Math.max(hsl.l, 0.5);  // Keep lightness reasonable
+        
+        // Update UI
+        this.updateColorUI(hexColor, name);
+        
+        // Update custom color picker and input
+        const colorPicker = document.getElementById('colorPicker');
+        const colorInput = document.getElementById('colorInput');
+        if (colorPicker) colorPicker.value = hexColor;
+        if (colorInput) colorInput.value = hexColor;
+    }
+    
+    /**
+     * Update color UI elements
+     */
+    updateColorUI(color, name = null) {
+        const colorPreview = document.getElementById('colorPreview');
+        const colorNameEl = document.getElementById('colorName');
+        const colorValueEl = document.getElementById('colorValue');
+        const colorOptions = document.querySelectorAll('.color-option');
+        
+        // Update preview
+        if (colorPreview) {
+            colorPreview.style.background = color;
+        }
+        
+        // Update name
+        if (colorNameEl) {
+            colorNameEl.textContent = name || 'Custom';
+        }
+        
+        // Update hex value
+        if (colorValueEl) {
+            colorValueEl.textContent = color;
+        }
+        
+        // Update active option
+        colorOptions.forEach(option => {
+            option.classList.remove('active');
+            if (option.dataset.color && option.dataset.color.toUpperCase() === color.toUpperCase()) {
+                option.classList.add('active');
+                // Update name if not provided
+                if (!name && colorNameEl) {
+                    colorNameEl.textContent = option.dataset.name || 'Custom';
+                }
+            }
+        });
     }
     
     /**
@@ -182,6 +397,14 @@ export class ParticleController {
             this.processTwoHandGestures(hands[0], hands[1]);
         } else {
             this.processSingleHandGestures(hands[0]);
+        }
+
+        // Update hand position for repulsion (use palm position - landmark 0)
+        if (hands.length > 0) {
+            const palm = hands[0][0]; // Wrist/palm base position
+            this.handPosition3D = this.screenToWorld(palm.x, palm.y);
+        } else {
+            this.handPosition3D = null;
         }
     }
     
@@ -258,7 +481,8 @@ export class ParticleController {
             this.rotYFilter.reset();
             this.pinchFilter.reset();
         }
-        
+
+        this.handPosition3D = null; // Clear hand position
         this.autoRotate = true;
         this.uiManager.updateStatus('', 'No hands detected');
     }
@@ -298,15 +522,15 @@ export class ParticleController {
             }
         }
         
-        // Update particles
-        this.particles.update();
+        // Update particles with hand repulsion and gradient
+        this.particles.update(this.handPosition3D, this.config.repulsion, this.config.gradient);
         this.particles.setTransform(currentScale, currentRotX, currentRotY);
         
         // Update UI
         this.uiManager.updateIndicators(currentScale, currentRotX, currentRotY);
-        
-        // Render scene
-        this.renderer.render(this.scene, this.camera);
+
+        // Render scene with bloom effect
+        this.composer.render();
     }
 }
 

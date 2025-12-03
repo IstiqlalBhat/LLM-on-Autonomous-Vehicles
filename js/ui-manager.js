@@ -12,6 +12,7 @@ export class UIManager {
             rotationXBar: document.getElementById('rotation-x-bar'),
             rotationYBar: document.getElementById('rotation-y-bar'),
             colorValue: document.getElementById('colorValue'),
+            colorSwatches: document.querySelectorAll('.color-swatch'),
             loading: document.getElementById('loading')
         };
     }
@@ -55,7 +56,31 @@ export class UIManager {
      * Update color value display
      */
     updateColorValue(color) {
-        this.elements.colorValue.textContent = color;
+        this.elements.colorValue.textContent = color.toUpperCase();
+    }
+
+    /**
+     * Update active color swatch
+     */
+    updateActiveColorSwatch(color) {
+        // Refresh swatches list in case DOM changed
+        this.elements.colorSwatches = document.querySelectorAll('.color-swatch');
+        
+        // Remove active class from all swatches
+        this.elements.colorSwatches.forEach(swatch => {
+            swatch.classList.remove('active');
+        });
+
+        // Normalize colors for comparison
+        const normalizedColor = color.toUpperCase();
+        
+        // Find and activate the swatch with matching color
+        this.elements.colorSwatches.forEach(swatch => {
+            const swatchColor = (swatch.dataset.color || '').toUpperCase();
+            if (swatchColor === normalizedColor) {
+                swatch.classList.add('active');
+            }
+        });
     }
 }
 

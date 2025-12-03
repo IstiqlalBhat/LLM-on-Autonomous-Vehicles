@@ -1,180 +1,162 @@
-# 🎨 Gesture Controlled 3D Particle System
+# Gesture-Controlled Particle System
 
-An interactive 3D particle system controlled by hand gestures using MediaPipe and Three.js.
+Wave your hands and watch thousands of glowing particles respond. This project uses your webcam to track hand gestures and lets you sculpt, spin, and play with 3D particle formations in real-time.
 
-## ✨ Features
+## What it does
 
-- **Hand Gesture Control**: Scale and rotate particles using hand movements
-- **Multiple Shapes**: Heart, Flower, Saturn, Buddha Statue, Fireworks, and Sphere
-- **Real-time Response**: Smooth, responsive particle animations
-- **Color Customization**: Choose any color for the particles
-- **Modern UI**: Beautiful glassmorphic interface
+Control 18,000 particles with your bare hands. No mouse, no keyboard - just gestures:
 
-## 📁 Project Structure
+- **Pinch** to compress particles into a tight cluster
+- **Spread your hands** to expand them outward
+- **Tilt** to rotate the formation
+- **Move through the cloud** and particles scatter away from your hand (force field effect)
+- **Switch colors** - 20+ presets or pick your own
+- **Enable gradients** for rainbow effects that shift with particle depth, position, or velocity
+- **Morph between shapes** - heart, flower, saturn, buddha statue, fireworks, sphere
 
+The whole thing runs at 60fps with bloom post-processing that makes particles glow like energy orbs.
+
+## Running it
+
+You need a web server (ES6 modules won't work with `file://` URLs). Pick one:
+
+```bash
+# Python (easiest)
+python -m http.server 8000
+
+# Node
+npx http-server -p 8000
+
+# PHP
+php -S localhost:8000
 ```
-CodeJaai/
-├── index.html              # Main HTML file
-├── styles.css              # All styling
-├── js/
-│   ├── main.js            # Entry point
-│   ├── config.js          # Configuration & constants
-│   ├── smoothing.js       # Smoothing algorithms
-│   ├── hand-tracking.js   # Hand tracking state management
-│   ├── gesture-detection.js # Gesture detection functions
-│   ├── shape-generator.js # 3D shape generation
-│   ├── particle-system.js # Three.js particle system
-│   ├── ui-manager.js      # UI update management
-│   ├── camera-preview.js  # Camera feed rendering
-│   └── particle-controller.js # Main controller
-└── README.md              # This file
-```
 
-## 🚀 Getting Started
+Then open `http://localhost:8000` and allow camera access when prompted.
 
-### Prerequisites
+**Note**: Make sure you have decent lighting - MediaPipe needs to see your hands clearly.
 
-- A modern web browser (Chrome, Firefox, Edge, Safari)
-- Webcam access
+## How to use it
 
-### Running Locally
+**One hand gestures:**
+- Pinch (thumb + index finger close together) = shrink particles
+- Open hand = expand particles
+- Tilt your hand = rotate the formation
+- Move your palm through the cloud = particles scatter away from you
 
-1. **Clone or download** this repository
+**Two hands:**
+- Move hands closer/farther apart = scale up/down
+- Tilt both hands together = steer the rotation
 
-2. **Serve the files** using a local web server:
+**Fist** = locks rotation in place
 
-   ```bash
-   # Using Python 3
-   python -m http.server 8000
-   
-   # Using Node.js (http-server)
-   npx http-server -p 8000
-   
-   # Using PHP
-   php -S localhost:8000
-   ```
+**UI panel (left side):**
+- Click shape buttons to morph between formations
+- Toggle "Dynamic Gradient" for color effects:
+  - **Radial**: colors shift from center → edge
+  - **Depth**: colors based on front/back position
+  - **Velocity**: faster-moving particles change color
+- Pick colors from the grid or use custom picker
+- Switch gesture modes (scale only, rotate only, or both)
 
-3. **Open** your browser and navigate to:
-   ```
-   http://localhost:8000
-   ```
+## How it works
 
-4. **Allow camera access** when prompted
+The codebase is split into focused modules:
 
-> ⚠️ **Important**: The application must be served via HTTP/HTTPS. Opening `index.html` directly as a file won't work due to ES6 module restrictions.
+- **particle-controller.js** - main orchestrator, coordinates everything
+- **particle-system.js** - Three.js rendering, handles 18k particles, repulsion physics, and gradient calculations
+- **gesture-detection.js** - pure functions that analyze hand positions (pinch distance, tilt angles, etc.)
+- **hand-tracking.js** - manages MediaPipe state, handles "grace periods" when hands briefly leave frame
+- **smoothing.js** - critically damped springs and EMA filters for smooth motion (no jitter)
+- **shape-generator.js** - math functions that generate coordinates for each shape
+- **config.js** - tune everything from one place (particle count, smoothing factors, repulsion strength, etc.)
 
-## 🎮 How to Use
+**Tech stack:**
+- Three.js r128 for 3D rendering
+- Three.js post-processing (EffectComposer + UnrealBloomPass) for glow effects
+- MediaPipe Hands for webcam tracking
+- Vanilla JS with ES6 modules (no framework bloat)
 
-### Gesture Controls
+## Customizing
 
-| Gesture | Action |
-|---------|--------|
-| ✋↔️✋ **Two hands apart/together** | Scale particles up/down |
-| 🤏 **Pinch** (thumb + index) | Compress particles |
-| 🖐️ **Tilt hand** up/down | Rotate on X-axis |
-| 🖐️ **Tilt hand** left/right | Rotate on Y-axis |
-| ✊ **Make a fist** | Lock current rotation |
+Everything's configurable in `js/config.js`. Some things you might want to tweak:
 
-### UI Controls
-
-- **Shape Buttons**: Click to morph particles into different shapes
-- **Gesture Mode**: Toggle between Scale, Rotate, or Both
-- **Color Picker**: Change particle color
-- **Indicators**: Real-time feedback on scale and rotation
-
-## 🏗️ Architecture
-
-### Module Overview
-
-1. **config.js**: Centralized configuration for easy tuning
-2. **smoothing.js**: Implements smooth value interpolation and filtering
-3. **hand-tracking.js**: Manages hand detection state with grace periods
-4. **gesture-detection.js**: Pure functions for gesture analysis
-5. **shape-generator.js**: Mathematical functions for 3D shapes
-6. **particle-system.js**: Three.js particle rendering and animation
-7. **ui-manager.js**: DOM manipulation and UI updates
-8. **camera-preview.js**: Video feed with hand landmarks
-9. **particle-controller.js**: Orchestrates all modules
-10. **main.js**: Application initialization
-
-### Key Technologies
-
-- **Three.js**: 3D rendering and particle system
-- **MediaPipe Hands**: Real-time hand tracking
-- **ES6 Modules**: Clean, modular code organization
-- **Custom Smoothing**: Critically damped springs for smooth motion
-
-## 🎨 Customization
-
-### Adjusting Particle Count
-
-Edit `js/config.js`:
-
+**Particle count:**
 ```javascript
 particle: {
-    count: 18000,  // Change this value
-    // ...
+    count: 18000,  // More = prettier but slower. 10k-25k is the sweet spot
 }
 ```
 
-### Adding New Shapes
+**Hand repulsion strength:**
+```javascript
+repulsion: {
+    radius: 2.0,    // How far the force field extends
+    strength: 0.5,  // How hard particles get pushed (0.3-0.8 recommended)
+}
+```
 
-1. Add shape function to `js/shape-generator.js`:
-   ```javascript
-   myNewShape() {
-       // Return {x, y, z} coordinates
-   }
-   ```
+**Gradient settings:**
+```javascript
+gradient: {
+    baseHue: 0.6,      // Starting color (0=red, 0.33=green, 0.66=blue)
+    hueRange: 0.3,     // How much colors shift (0.2-0.5 looks good)
+    saturation: 0.8,   // Color intensity
+}
+```
 
-2. Add button in `index.html`:
-   ```html
-   <button class="shape-btn" data-shape="myNewShape">
-       <span class="icon">🔷</span>
-       New Shape
-   </button>
-   ```
-
-### Tuning Smoothness
-
-Adjust in `js/config.js`:
-
+**Smoothing (if gestures feel too twitchy or laggy):**
 ```javascript
 smoothing: {
-    scale: { 
-        factor: 0.12,    // Higher = faster response
-        deadZone: 0.02   // Lower = more sensitive
-    },
-    // ...
+    scale: { factor: 0.12 },     // Higher = snappier response
+    rotation: { factor: 0.08 },  // Lower = smoother but slower
 }
 ```
 
-## 🐛 Troubleshooting
+**Adding your own shapes:**
 
-### Camera not working
-- Ensure you've granted camera permissions
-- Check if another application is using the camera
-- Try refreshing the page
+1. Write a function in `js/shape-generator.js` that returns `{x, y, z}` coordinates
+2. Add a button in `index.html` with `data-shape="yourFunctionName"`
 
-### Gestures not responding
-- Ensure good lighting conditions
-- Keep hands visible in camera view
-- Try adjusting hand distance from camera
+That's it. The system auto-generates positions for all 18k particles based on your function.
 
-### Module loading errors
-- Make sure you're serving via HTTP/HTTPS
-- Check browser console for specific errors
-- Ensure all files are in correct directories
+## Common issues
 
-## 📄 License
+**"No hands detected"**
+- Check your lighting - MediaPipe needs to actually see your hands
+- Make sure you're not covering the camera
+- Try moving closer/farther from the camera
+- Grant camera permissions if the browser blocked it
 
-MIT License - Feel free to use and modify!
+**Gestures are jittery or unresponsive**
+- Improve lighting
+- Adjust smoothing factors in config.js
+- Make sure your hands are fully visible (not cut off by camera frame)
+- If it's laggy, lower particle count
 
-## 🙏 Credits
+**"Module not found" errors**
+- You need a web server. Don't open index.html directly as a file
+- Use `python -m http.server` or similar
 
-- **Three.js** - 3D rendering library
-- **MediaPipe** - Hand tracking by Google
-- **Sora Font** - Google Fonts
+**Frame rate issues**
+- Lower particle count in config.js (try 10000 instead of 18000)
+- Disable gradient mode if enabled
+- Close other browser tabs
 
----
+## Performance notes
 
-Made with ✨ and JavaScript
+This renders 18,000 particles at 60fps on a decent GPU. Each frame:
+- Updates particle positions (morphing + repulsion physics)
+- Optionally calculates per-particle colors for gradients
+- Applies bloom post-processing
+
+If you're running this on a potato, reduce particle count. If you have a beast GPU, crank it up to 30k+ and watch it glow.
+
+## License
+
+MIT - do whatever you want with it
+
+## Built with
+
+- [Three.js](https://threejs.org/) - 3D graphics
+- [MediaPipe Hands](https://google.github.io/mediapipe/solutions/hands.html) - Google's hand tracking
+- Lots of coffee and trial-and-error with shader math

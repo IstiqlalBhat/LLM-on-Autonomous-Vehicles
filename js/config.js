@@ -6,7 +6,7 @@
 export const CONFIG = {
     particle: {
         count: 18000,
-        size: 0.07,
+        size: 0.09, // Increased for better bloom visibility
         morphSpeed: 0.04,
         velocityDamping: 0.92
     },
@@ -33,10 +33,24 @@ export const CONFIG = {
     },
     autoRotate: {
         speed: 0.003,
-        oscillation: { 
-            amplitude: 0.08, 
-            frequency: 0.3 
+        oscillation: {
+            amplitude: 0.08,
+            frequency: 0.3
         }
+    },
+    repulsion: {
+        radius: 2.0,      // Distance at which hand affects particles
+        strength: 0.5,    // Force strength multiplier
+        enabled: true     // Toggle repulsion on/off
+    },
+    gradient: {
+        enabled: false,   // Toggle gradient mode
+        mode: 'radial',   // 'radial', 'depth', 'velocity'
+        baseHue: 0.6,     // Starting hue (0-1) - default blue
+        hueRange: 0.3,    // How much the hue shifts (0-1)
+        saturation: 0.8,  // Color saturation (0-1)
+        lightness: 0.6,   // Color lightness (0-1)
+        radius: 5.0       // Radius for radial gradient calculation
     }
 };
 

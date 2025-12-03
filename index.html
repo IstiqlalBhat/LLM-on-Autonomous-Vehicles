@@ -53,13 +53,53 @@
         </div>
 
         <label>Particle Color</label>
-        <div class="color-wrapper">
-            <div class="color-picker-circle">
-                <input type="color" id="colorPicker" value="#00d4ff">
-            </div>
-            <div class="color-info">
-                <div class="color-label">Current Color</div>
-                <div class="color-value" id="colorValue">#00d4ff</div>
+        <div class="color-grid" id="colorGrid">
+            <button class="color-btn active" data-color="#00d4ff" style="background:#00d4ff" title="Cyan"></button>
+            <button class="color-btn" data-color="#3a86ff" style="background:#3a86ff" title="Blue"></button>
+            <button class="color-btn" data-color="#8338ec" style="background:#8338ec" title="Purple"></button>
+            <button class="color-btn" data-color="#ff006e" style="background:#ff006e" title="Hot Pink"></button>
+            <button class="color-btn" data-color="#fb5607" style="background:#fb5607" title="Orange"></button>
+            <button class="color-btn" data-color="#ffbe0b" style="background:#ffbe0b" title="Gold"></button>
+            <button class="color-btn" data-color="#06ffa5" style="background:#06ffa5" title="Mint"></button>
+            <button class="color-btn" data-color="#00ff88" style="background:#00ff88" title="Green"></button>
+            <button class="color-btn" data-color="#ff1744" style="background:#ff1744" title="Red"></button>
+            <button class="color-btn" data-color="#ff6b9d" style="background:#ff6b9d" title="Rose"></button>
+            <button class="color-btn" data-color="#ffd93d" style="background:#ffd93d" title="Yellow"></button>
+            <button class="color-btn" data-color="#ff9ff3" style="background:#ff9ff3" title="Pink"></button>
+            <button class="color-btn" data-color="#54a0ff" style="background:#54a0ff" title="Sky Blue"></button>
+            <button class="color-btn" data-color="#5f27cd" style="background:#5f27cd" title="Deep Purple"></button>
+            <button class="color-btn" data-color="#00d2d3" style="background:#00d2d3" title="Turquoise"></button>
+            <button class="color-btn" data-color="#ff6348" style="background:#ff6348" title="Coral"></button>
+            <button class="color-btn" data-color="#ffa502" style="background:#ffa502" title="Amber"></button>
+            <button class="color-btn" data-color="#2ed573" style="background:#2ed573" title="Emerald"></button>
+            <button class="color-btn" data-color="#ffffff" style="background:#ffffff" title="White"></button>
+            <button class="color-btn" data-color="#ff0080" style="background:#ff0080" title="Magenta"></button>
+        </div>
+        <div class="color-picker-row">
+            <input type="color" id="colorPicker" value="#00d4ff" class="color-picker-input">
+            <span class="color-value-display" id="colorValue">#00d4ff</span>
+        </div>
+
+        <div class="gradient-toggle-wrapper">
+            <label class="gradient-toggle">
+                <input type="checkbox" id="gradientToggle">
+                <span class="gradient-toggle-slider"></span>
+                <span class="gradient-toggle-label">Dynamic Gradient</span>
+            </label>
+        </div>
+
+        <div class="gradient-controls" id="gradientControls" style="display: none;">
+            <label>Gradient Type</label>
+            <div class="mode-toggle">
+                <button class="gradient-mode-btn active" data-gradient-mode="radial">
+                    🎯 Radial
+                </button>
+                <button class="gradient-mode-btn" data-gradient-mode="depth">
+                    🌊 Depth
+                </button>
+                <button class="gradient-mode-btn" data-gradient-mode="velocity">
+                    ⚡ Velocity
+                </button>
             </div>
         </div>
 
@@ -102,12 +142,15 @@
             </div>
         </div>
 
+        <label style="margin-top: 20px;">Rotation Preview</label>
         <div class="rotation-viz">
-            <div class="axis-indicator x-axis" id="x-axis-viz">
+            <div class="axis-indicator x-axis" id="x-axis-viz" title="X-Axis Rotation (Up/Down Tilt)">
                 <span class="axis-label">X</span>
+                <span class="axis-description">Up/Down</span>
             </div>
-            <div class="axis-indicator y-axis" id="y-axis-viz">
+            <div class="axis-indicator y-axis" id="y-axis-viz" title="Y-Axis Rotation (Left/Right Turn)">
                 <span class="axis-label">Y</span>
+                <span class="axis-description">Left/Right</span>
             </div>
         </div>
     </div>
@@ -134,6 +177,16 @@
 
     <!-- External Libraries -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+    <!-- Three.js Post-Processing -->
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/EffectComposer.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/RenderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/CopyShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/shaders/LuminosityHighPassShader.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/ShaderPass.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/postprocessing/UnrealBloomPass.js"></script>
+
+    <!-- MediaPipe -->
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/control_utils/control_utils.js" crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/drawing_utils/drawing_utils.js" crossorigin="anonymous"></script>
