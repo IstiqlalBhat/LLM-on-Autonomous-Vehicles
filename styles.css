@@ -1569,30 +1569,28 @@ label {
         transform: none;
     }
 
-    .instructions:hover {
-        transform: translateX(-50%);
-    }
-
     #camera-preview:hover {
         transform: none;
     }
 }
 
-/* Safe area adjustments for devices with notches */
-@supports (padding: env(safe-area-inset-top)) {
-    #ui-container {
-        top: max(10px, env(safe-area-inset-top));
-        left: max(10px, env(safe-area-inset-left));
-    }
+/* Safe area adjustments for devices with notches - mobile only */
+@media screen and (max-width: 767px) {
+    @supports (padding: env(safe-area-inset-top)) {
+        #ui-container {
+            top: max(10px, env(safe-area-inset-top));
+            left: max(10px, env(safe-area-inset-left));
+        }
 
-    #camera-preview {
-        bottom: max(10px, env(safe-area-inset-bottom));
-        right: max(10px, env(safe-area-inset-right));
-    }
+        #camera-preview {
+            bottom: max(10px, env(safe-area-inset-bottom));
+            right: max(10px, env(safe-area-inset-right));
+        }
 
-    .instructions {
-        bottom: max(10px, env(safe-area-inset-bottom));
-        left: max(10px, env(safe-area-inset-left));
+        .instructions {
+            bottom: max(10px, env(safe-area-inset-bottom));
+            left: max(10px, env(safe-area-inset-left));
+        }
     }
 }
 
