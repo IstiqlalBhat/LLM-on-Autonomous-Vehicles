@@ -1,0 +1,23 @@
+# Vision Model Evaluator - Requirements
+# ======================================
+
+# Core dependencies
+httpx>=0.24.0          # Async HTTP client
+tqdm>=4.65.0           # Progress bars
+pillow>=9.0.0          # Image processing
+
+# Data handling
+pandas>=1.5.0          # Data analysis
+numpy>=1.24.0          # Numerical operations
+
+# Visualization
+matplotlib>=3.7.0      # Plotting
+seaborn>=0.12.0        # Statistical visualizations
+
+# Optional: For LLaVA local deployment
+# transformers==4.36.2
+# torch>=2.0.0
+# accelerate>=0.21.0
+
+# Optional: For Colab
+# google-colab
